@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self' 'unsafe-inline' 'unsafe-eval'
+           https://cdn.jsdelivr.net http://127.0.0.1:5000">
+<title>Beam Mechanics Simulator</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- TITLE BAR -->
+<div id="titlebar">
+  <div class="left">
+    <div class="logo">B</div>
+    <span class="appname">BEAM MECHANICS SIMULATOR</span>
+    <span class="sub">SFD &amp; BMD Analysis &mdash; Simply Supported Beam</span>
+  </div>
+  <div class="window-controls">
+    <button class="wc-btn" id="btn-min"></button>
+    <button class="wc-btn" id="btn-max"></button>
+    <button class="wc-btn" id="btn-close"></button>
+  </div>
+</div>
+
+<!-- BREAK OVERLAYS -->
+<div id="break-overlay"></div>
+<div id="break-warning">
+  <div class="warn-title">STRUCTURAL FAILURE</div>
+  <div class="warn-sub" id="warn-sub-text">Beam exceeds yield strength</div>
+  <div class="warn-detail" id="warn-detail-text">Reduce load or increase diameter</div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div id="main">
+  <!-- PLOTS AREA -->
+  <div id="plots-area" tabindex="0">
+    <!-- Beam Diagram -->
+    <div class="chart-container" id="beam-container">
+      <div class="panel-title">Beam Diagram</div>
+      <svg id="beam-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <!-- SFD -->
+    <div class="chart-container" id="sfd-container">
+      <div class="panel-title">Shear Force Diagram (SFD)</div>
+      <canvas id="sfd-chart"></canvas>
+    </div>
+    <!-- BMD -->
+    <div class="chart-container" id="bmd-container">
+      <div class="panel-title">Bending Moment Diagram (BMD)</div>
+      <canvas id="bmd-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- RESIZE HANDLE: plots <-> right panel -->
+  <div id="resizer-h" class="resizer-handle-h"></div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <div class="inp-title" id="panel-title">Inputs</div>
+    <div class="inp-sep"></div>
+    <div class="inp-card"><span class="inp-key">L</span>
+                          <span class="inp-val" id="inp-L">&mdash;</span></div>
+    <div class="inp-card"><span class="inp-key">P</span>
+                          <span class="inp-val" id="inp-P">&mdash;</span></div>
+    <div class="inp-card"><span class="inp-key">UDL</span>
+                          <span class="inp-val" id="inp-UDL">&mdash;</span></div>
+    <div class="inp-card"><span class="inp-key">D</span>
+                          <span class="inp-val" id="inp-D">&mdash;</span></div>
+    <div class="inp-card"><span class="inp-key">Material</span>
+                          <span class="inp-val" id="inp-mat">&mdash;</span></div>
+    <div class="inp-sep"></div>
+    <button id="explain-btn">EXPLAIN CALCULATIONS</button>
+    <div id="explain-panel">
+      <div id="explain-placeholder">
+        Set values and click<br>"Explain Calculations"<br>for step-by-step<br>breakdown
+      </div>
+      <div id="explain-text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS STRIP -->
+<div id="results-strip">
+  <div class="metric-card">
+    <div class="metric-label">R_A</div>
+    <div class="metric-value" id="res-RA">&mdash;</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">R_B</div>
+    <div class="metric-value" id="res-RB">&mdash;</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">V max</div>
+    <div class="metric-value" id="res-Vmax">&mdash;</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">M max</div>
+    <div class="metric-value" id="res-Mmax">&mdash;</div>
+  </div>
+  <div class="stress-card" id="stress-card">
+    <div class="stress-item">
+      <div class="stress-label">sigma max</div>
+      <div class="stress-val" id="res-sigma">&mdash;</div>
+    </div>
+    <div class="stress-item">
+      <div class="stress-label">sigma yield</div>
+      <div class="stress-val" id="res-yield">&mdash;</div>
+    </div>
+    <div class="stress-item">
+      <div class="stress-label">FOS</div>
+      <div class="stress-val" id="res-fos">&mdash;</div>
+    </div>
+    <div class="safety-badge safe" id="res-safety">[SAFE]</div>
+  </div>
+</div>
+
+<!-- RESIZE HANDLE: main area <-> controls bar -->
+<div id="resizer-v" class="resizer-handle-v"></div>
+
+<!-- CONTROLS BAR -->
+<div id="controls-bar">
+  <div id="sliders-section">
+    <div class="slider-row">
+      <span class="slider-label">Beam Length</span>
+      <input type="range" id="sl-L" min="100" max="1000" value="500" step="1">
+      <span class="slider-val" id="lbl-L">5.0 m</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Point Load</span>
+      <input type="range" id="sl-P" min="0" max="2000" value="1000" step="1">
+      <span class="slider-val" id="lbl-P">1000 N</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Load Position</span>
+      <input type="range" id="sl-pos" min="0" max="500" value="200" step="1">
+      <span class="slider-val" id="lbl-pos">2.0 m</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">UDL Intensity</span>
+      <input type="range" id="sl-udl" min="0" max="500" value="200" step="1">
+      <span class="slider-val" id="lbl-udl">200 N/m</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Diameter</span>
+      <input type="range" id="sl-dia" min="20" max="200" value="100" step="1">
+      <span class="slider-val" id="lbl-dia">100 mm</span>
+    </div>
+  </div>
+
+  <div id="controls-right">
+    <div class="mat-section">
+      <div class="mat-title">Material</div>
+      <div class="mat-row" data-mat="Steel">
+        <div class="mat-dot active" id="dot-Steel"></div>
+        <span class="mat-name active" id="name-Steel">Steel (250 MPa)</span>
+      </div>
+      <div class="mat-row" data-mat="Aluminum">
+        <div class="mat-dot" id="dot-Aluminum"></div>
+        <span class="mat-name" id="name-Aluminum">Aluminum (270 MPa)</span>
+      </div>
+      <div class="mat-row" data-mat="Timber">
+        <div class="mat-dot" id="dot-Timber"></div>
+        <span class="mat-name" id="name-Timber">Timber (40 MPa)</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="sim-btn btn-animate" id="btn-animate">&gt;&gt; ANIMATE</button>
+      <button class="sim-btn btn-reset" id="btn-reset">RESET</button>
+    </div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

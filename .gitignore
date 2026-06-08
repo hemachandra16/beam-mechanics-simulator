@@ -1,0 +1,17 @@
+node_modules/
+beam_env/
+__pycache__/
+*.pyc
+dist/
+build/
+build_backend/
+dist_backend/
+*.spec
+*.exe
+*.msi
+*.deb
+*.dmg
+.DS_Store
+Thumbs.db
+*.log
+.env
