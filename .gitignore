@@ -15,3 +15,12 @@ dist_backend/
 Thumbs.db
 *.log
 .env
+
+# Dev artifacts (not for public repo)
+project_context_for_report.md
+analysis_results.md
+verify_changes.py
+walkthrough.md
+beam_simulation.py
+setup_and_run.bat
+report/
